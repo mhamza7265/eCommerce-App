@@ -1,0 +1,314 @@
+.sticky-bar.setfixed {
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 10;
+  transition: all 0.3s ease 0s;
+  box-shadow: 0 8px 20px 0 rgba(0, 0, 0, 0.05);
+  animation: topdownheader 700ms ease-in-out 0s normal none 1;
+}
+@keyframes topdownheader {
+  from {
+    top: -60px;
+  }
+  to {
+    top: 0;
+  }
+}
+
+span[aria-label="Loading Spinner"] > span {
+  width: 30px !important;
+  height: 30px !important;
+}
+
+.pw-toggle-eye,
+.pw-toggle-eye:hover {
+  position: absolute;
+  top: 50%;
+  left: 92%;
+  transform: translateY(-50%);
+  color: gray;
+}
+
+.custom-modal .modal-dialog {
+  /* margin-top: 50px; */
+  margin-top: 50px;
+}
+
+.about-count {
+  z-index: 2 !important;
+}
+
+.top-skeleton > span {
+  width: 30%;
+  height: max-content;
+}
+
+.path-breadcrumb > span {
+  width: 8%;
+}
+
+.product-action-1 {
+  white-space: nowrap;
+}
+
+.countdown {
+  background-color: white;
+  width: 65px;
+  padding: 10px 0 !important;
+  border-radius: 4px;
+}
+
+.prod-img {
+  height: 200px;
+  object-fit: contain;
+}
+
+.prod-name {
+  height: 56px;
+}
+
+.prod-img-2 {
+  height: 180px;
+  object-fit: contain;
+}
+
+.prod-img-3 {
+  height: 300px;
+  object-fit: contain;
+}
+
+.checkout-btn {
+  position: absolute;
+  top: 100%;
+  left: 0;
+}
+
+.custome-radio input[type="radio"] + .form-check-label::after {
+  content: "";
+  height: 10px;
+  width: 10px;
+  border-radius: 100%;
+  position: absolute;
+  top: 50% !important;
+  left: 3px;
+  transform: translateY(-30%) !important;
+  opacity: 0;
+}
+
+.search-btn {
+  position: absolute;
+  top: 50%;
+  left: 90%;
+  transform: translateY(-50%);
+  background-color: #3bb77e !important;
+  color: white !important;
+  border-radius: 2px !important;
+  border: none;
+  font-size: 20px;
+  height: 100%;
+  padding: 5px 17px;
+}
+
+.search-btn:hover {
+  background-color: #29a56c !important;
+}
+
+.header-style-1 .search-style-2 form {
+  min-width: 700px !important;
+}
+
+.search-style-2 {
+  max-width: max-content !important;
+}
+
+.card-2 figure img {
+  max-width: 80px;
+  min-width: 80px;
+  max-height: 70px;
+  min-height: 70px;
+  object-fit: cover;
+}
+
+.card-2 figure {
+  margin-bottom: 22px !important;
+}
+
+.search-style-2 form input {
+  background-image: unset !important;
+  background-repeat: unset !important;
+  background-position: unset !important;
+}
+
+.main-categori-wrap .categori-dropdown-inner {
+  min-width: 235px !important;
+}
+
+.categories-dropdown-active-large {
+  min-width: 235px !important;
+}
+
+.search-Suggestions {
+  width: 615px;
+  position: absolute;
+  top: 54%;
+  left: 20%;
+  z-index: 9;
+  background: white;
+  box-shadow: 0 0 10px 0px rgb(126, 123, 123);
+  border-radius: 5px;
+  padding: 15px 10px;
+}
+
+.search-suggestion-p {
+  cursor: pointer;
+}
+
+.search-suggestion-p:hover {
+  background-color: #86dfb5;
+  color: #000;
+}
+
+.admin-login {
+  background-image: url("../../admin_panel/assets/images/login_vector_art.svg");
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+.admin-login .login {
+  background-color: #5c5a5a;
+  border-radius: 15px;
+}
+
+.form-group .admin-login-input:focus {
+  background: #bce3c9 !important;
+  border-color: #bce3c9;
+}
+
+.form-group .admin-login-input {
+  background: #bce3c9 !important;
+  border-color: #bce3c9;
+}
+
+.order-action-dd {
+  background-color: #88d1af;
+  position: absolute;
+  top: 75%;
+  left: 0;
+  z-index: 9;
+  padding: 13px;
+}
+
+.text-small {
+  font-size: 16px;
+  display: block;
+  text-wrap: nowrap;
+}
+
+.cursor-pointer {
+  cursor: pointer;
+}
+
+.status-select {
+  border: 1px solid #000;
+}
+
+.category-img {
+  height: 100px;
+  width: 100px;
+  object-fit: contain;
+  border-radius: 10px;
+}
+
+.btn-danger {
+  color: #fff !important;
+  background-color: #dc3545 !important;
+  border-color: #dc3545 !important;
+}
+
+.paginate {
+  border: 1px solid #000;
+  border-radius: 50%;
+  padding: 10px 20px;
+}
+
+.paginate.active {
+  background-color: #000;
+  color: white;
+}
+
+.paginate.disable {
+  pointer-events: none;
+}
+
+.pagination.disabled {
+  cursor: no-drop;
+}
+
+.paginate-arrow {
+  background-color: #000;
+  color: white;
+}
+
+.paginate-arrow.disable {
+  background-color: #bbb9b9;
+  color: rgb(102, 98, 98);
+}
+
+.pagination p {
+  margin-bottom: 0;
+}
+
+.hotline img {
+  max-width: 35px;
+}
+
+.user-info__img img {
+  width: 100%;
+}
+
+.sidebar__menu__item {
+  margin-bottom: 1.2rem !important;
+  width: 190px;
+}
+
+.sidebar__menu__item:hover {
+  background-color: black;
+}
+
+.sidebar__menu__item:last-child {
+  margin-top: unset !important;
+  cursor: pointer;
+}
+
+.modal-backdrop {
+  z-index: 5300 !important;
+}
+
+.modal {
+  z-index: 5400 !important;
+}
+
+.action-buttons.disabled {
+  pointer-events: none;
+}
+
+.action-btns.disabled {
+  cursor: no-drop;
+}
+
+.orders-search {
+  width: 30% !important;
+  height: 50px !important;
+}
+
+.chakra-portal > div {
+  /* z-index: 99999 !important; */
+}
+
+@media only screen and (max-width: 1366px) {
+  .main {
+    width: 100% !important;
+  }
+}
