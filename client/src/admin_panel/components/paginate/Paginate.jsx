@@ -1,6 +1,5 @@
 import { useState } from "react";
 import sendRequest, { errorToast } from "../../../utility-functions/apiManager";
-import { BounceLoader } from "react-spinners";
 import { BarLoader } from "react-spinners";
 
 function Paginate({ endPoint, state, setState, formType, query }) {
@@ -30,16 +29,19 @@ function Paginate({ endPoint, state, setState, formType, query }) {
           : arrowType == "increase" && state?.hasNextPage
           ? `${endPoint}?page=${state?.page + 1}&type=${query}`
           : null
-      }`
+      }`,
+      undefined,
+      undefined,
+      "admin"
     )
       .then((res) => {
         setLoading(false);
         if (res.status) {
           setPaginateIsDisabled(false);
-          setState(eval(formType));
+          setState(res[formType]);
         } else {
           setPaginateIsDisabled(false);
-          errorToast(`${formType.split(".")[1]} list could not be updated`);
+          errorToast(`${formType} list could not be updated`);
         }
       })
       .catch((err) => {
@@ -54,15 +56,21 @@ function Paginate({ endPoint, state, setState, formType, query }) {
     const pageNumber = e.target.getAttribute("data");
     setPaginateIsDisabled(true);
     setLoading(true);
-    sendRequest("get", `${endPoint}?page=${pageNumber}&type=${query}`)
+    sendRequest(
+      "get",
+      `${endPoint}?page=${pageNumber}&type=${query}`,
+      undefined,
+      undefined,
+      "admin"
+    )
       .then((res) => {
         setLoading(false);
         if (res.status) {
           setPaginateIsDisabled(false);
-          setState(eval(formType));
+          setState(res[formType]);
         } else {
           setPaginateIsDisabled(false);
-          errorToast(`${formType.split(".")[1]} list could not be updated`);
+          errorToast(`${formType} list could not be updated`);
         }
       })
       .catch((err) => {
@@ -74,51 +82,55 @@ function Paginate({ endPoint, state, setState, formType, query }) {
   };
 
   return (
-    <div
-      className={`pagination position-relative d-flex justify-content-end p-3 bg-white ${
-        paginateIsDisabled && "disabled"
-      }`}
-    >
-      <BarLoader
-        color={"#ffffff"}
-        loading={loading}
-        cssOverride={override}
-        size={150}
-        aria-label="Loading Spinner"
-        data-testid="loader"
-      />
-      <p
-        className={`me-1 paginate cursor-pointer paginate-arrow ${
-          !state?.hasPrevPage && "disable"
-        }`}
-        data={"decrease"}
-        onClick={handlePaginateArrowsClick}
-      >
-        <i className="fas fa-caret-left" data={"decrease"}></i>
-      </p>
-      {state &&
-        [...Array(state?.totalPages)].map((item, i) => (
+    <tr>
+      <td colSpan={"100%"} className="p-0">
+        <div
+          className={`pagination position-relative d-flex justify-content-end p-3 bg-white ${
+            paginateIsDisabled && "disabled"
+          }`}
+        >
+          <BarLoader
+            color={"#ffffff"}
+            loading={loading}
+            cssOverride={override}
+            size={150}
+            aria-label="Loading Spinner"
+            data-testid="loader"
+          />
           <p
-            className={`me-1 paginate cursor-pointer ${
-              state?.page == i + 1 && "active"
-            } ${paginateIsDisabled && "disable"}`}
-            onClick={handlePaginateClick}
-            key={i}
-            data={i + 1}
+            className={`paginate cursor-pointer paginate-arrow ${
+              !state?.hasPrevPage && "disable"
+            }`}
+            data={"decrease"}
+            onClick={handlePaginateArrowsClick}
           >
-            {i + 1}
+            <i className="fas fa-caret-left" data={"decrease"}></i>
           </p>
-        ))}
-      <p
-        className={`me-1 paginate cursor-pointer paginate-arrow ${
-          !state?.hasNextPage && "disable"
-        }`}
-        data={"increase"}
-        onClick={handlePaginateArrowsClick}
-      >
-        <i className="fas fa-caret-right" data={"increase"}></i>
-      </p>
-    </div>
+          {state &&
+            [...Array(state?.totalPages)].map((item, i) => (
+              <p
+                className={`paginate cursor-pointer ${
+                  state?.page == i + 1 && "active"
+                } ${paginateIsDisabled && "disable"}`}
+                onClick={handlePaginateClick}
+                key={i}
+                data={i + 1}
+              >
+                {i + 1}
+              </p>
+            ))}
+          <p
+            className={`paginate cursor-pointer paginate-arrow ${
+              !state?.hasNextPage && "disable"
+            }`}
+            data={"increase"}
+            onClick={handlePaginateArrowsClick}
+          >
+            <i className="fas fa-caret-right" data={"increase"}></i>
+          </p>
+        </div>
+      </td>
+    </tr>
   );
 }
 

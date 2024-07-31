@@ -1,19 +1,19 @@
 import "./overall-list.scss";
-import { data } from "../../constants";
 import { useState, useEffect } from "react";
 import sendRequest from "../../../utility-functions/apiManager";
 
 const icons = [
-  <i className="bx bx-receipt"></i>,
-  <i className="bx bx-user"></i>,
-  <i className="bx bx-cube"></i>,
-  <i className="bx bx-dollar"></i>,
+  <i key={1} className="bx bx-receipt"></i>,
+  <i key={2} className="bx bx-user"></i>,
+  <i key={3} className="bx bx-cube"></i>,
+  <i key={4} className="bx bx-dollar"></i>,
+  <i key={5} className="fa fa-money"></i>,
 ];
 
 const OverallList = () => {
   const [dashboardData, setDashboardData] = useState(null);
   useEffect(() => {
-    sendRequest("post", "dashboard")
+    sendRequest("post", "dashboard", undefined, undefined, "admin")
       .then((res) => {
         if (res.status) {
           setDashboardData(res.data);
@@ -41,6 +41,10 @@ const OverallList = () => {
     {
       value: dashboardData?.sales?.salesTotal,
       title: "Revenue",
+    },
+    {
+      value: dashboardData?.profit,
+      title: "Profit",
     },
   ];
   return (

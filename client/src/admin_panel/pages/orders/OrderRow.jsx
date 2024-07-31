@@ -1,6 +1,3 @@
-import { useEffect } from "react";
-import { useState } from "react";
-
 function OrderRow({
   keyNum,
   id,
@@ -23,7 +20,7 @@ function OrderRow({
 
   const handleModalClick = (e) => {
     const curTarget = e.currentTarget.getAttribute("data");
-    setOrderId({ id, status });
+    setOrderId({ id, orderId, status });
     if (curTarget == "statusModal") {
       setStatusModal(true);
     } else {

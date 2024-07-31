@@ -27,8 +27,8 @@ import Preloader from "./common/preloader/Preloader";
 import ScrollToTop from "./common/ScrollToTop";
 import HaveAuth from "./components/Auth/check-auth/HaveAuth";
 import { useDispatch, useSelector } from "react-redux";
-import { useEffect, useState } from "react";
-import sendRequest from "./utility-functions/apiManager";
+import { useEffect } from "react";
+import sendRequest, { successToast } from "./utility-functions/apiManager";
 import { addProduct } from "./redux/reducers/productReducer";
 import { addCategory } from "./redux/reducers/categoryReducer";
 import { addWishlist } from "./redux/reducers/wishlistReducer";
@@ -49,13 +49,28 @@ import Dashboard from "./admin_panel/pages/Dashboard";
 import Blank from "./admin_panel/pages/Blank";
 import LoginPage from "./admin_panel/pages/LoginPage";
 import AdminAuth from "./admin_panel/pages/AdminAuth";
-import Orders from "./admin_panel/pages/orders";
+import Orders from "./admin_panel/pages/Orders";
 import Categories from "./admin_panel/pages/categories/Categories";
 import Products from "./admin_panel/pages/products/Products";
 import Customers from "./admin_panel/pages/customers/Customers";
 import Admins from "./admin_panel/pages/admins/Admins";
 import { addCurrentUser } from "./redux/reducers/currentUserReducer";
 import Profile from "./admin_panel/pages/profile/Profile";
+import Verify from "./components/Auth/verification/verify";
+import { getToken, onMessage } from "firebase/messaging";
+import { messaging } from "./firebase/firebaseConfig";
+import { ToastContainer, toast } from "react-toastify";
+import Message from "./common/Message";
+import { addNotifications } from "./redux/reducers/notificatonsReducer";
+import Blank2 from "./admin_panel/pages/CMSPage";
+import HomePage from "./admin_panel/pages/CMS/HomePage";
+import CMSPage from "./admin_panel/pages/CMSPage";
+import CMSIndex from "./admin_panel/pages/CMS/CMSIndex";
+import SiteSetting from "./admin_panel/pages/CMS/SiteSetting";
+import AboutPage from "./admin_panel/pages/CMS/AboutPage";
+import ContactPage from "./admin_panel/pages/CMS/contactPage";
+import Payments from "./admin_panel/pages/CMS/Payments";
+import Setting from "./admin_panel/pages/CMS/Setting";
 
 const stripePromise = loadStripe(
   "pk_test_51OgnngCZAiYypOnUtpzuyqpnUAilEOQyEk9M8aXZ1zl2sfQV7iWNsbdfvEDhlHbe1iF3lkGosYA6TYFExeYElaM3005kpwWTxc"
@@ -63,11 +78,10 @@ const stripePromise = loadStripe(
 
 function App() {
   const dispatch = useDispatch();
-  const [userRole, setUserRole] = useState(null);
   const updateWishlist = useSelector(
     (state) => state.updateWishlistNavbar.number
   );
-  const currentUser = useSelector((state) => state.currentUser.user);
+  // const currentUser = useSelector((state) => state.currentUser.user);
 
   const options = {
     mode: "payment",
@@ -79,9 +93,16 @@ function App() {
       /*...*/
     },
   };
-
-  const user = localStorage.getItem("current_user");
-  // const currentUser = JSON.parse(user);
+  useEffect(() => {
+    if (!localStorage.getItem("settings")) {
+      sendRequest("get", "settings").then((res) => {
+        const obj = { title: res.setting.title, image: res.setting.image };
+        localStorage.setItem("settings", JSON.stringify(obj));
+      });
+    } else {
+      null;
+    }
+  }, []);
 
   useEffect(() => {
     sendRequest("get", "product")
@@ -91,9 +112,7 @@ function App() {
       .catch((err) => {
         console.log(err);
       });
-  }, []);
 
-  useEffect(() => {
     sendRequest("get", "products/listing")
       .then((res) => {
         dispatch(addProductByPage(res.products.docs));
@@ -101,9 +120,7 @@ function App() {
       .catch((err) => {
         console.log(err);
       });
-  }, []);
 
-  useEffect(() => {
     sendRequest("get", "products/bestsell")
       .then((res) => {
         dispatch(addBestsellProduct(res.products));
@@ -111,9 +128,7 @@ function App() {
       .catch((err) => {
         console.log(err);
       });
-  }, []);
 
-  useEffect(() => {
     sendRequest("get", "cart/qty")
       .then((res) => {
         dispatch(updateCartQuantity(res.quantity));
@@ -121,9 +136,7 @@ function App() {
       .catch((err) => {
         console.log(err);
       });
-  }, []);
 
-  useEffect(() => {
     sendRequest("get", "cart")
       .then((res) => {
         if (res.status) {
@@ -133,9 +146,7 @@ function App() {
       .catch((err) => {
         console.log(err);
       });
-  }, []);
 
-  useEffect(() => {
     sendRequest("get", "wishlist/qty")
       .then((res) => {
         dispatch(updateWishlistQuantity(res.wishlistQuantity));
@@ -143,9 +154,7 @@ function App() {
       .catch((err) => {
         console.log(err);
       });
-  }, []);
 
-  useEffect(() => {
     sendRequest("get", "orders")
       .then((res) => {
         if (res.status) dispatch(updateOrder(res.orders));
@@ -153,14 +162,30 @@ function App() {
       .catch((err) => {
         console.log(err);
       });
-  }, []);
 
-  useEffect(() => {
     sendRequest("get", "category")
       .then((res) => {
         dispatch(addCategory(res.categories));
       })
       .catch((err) => console.log(err));
+
+    sendRequest("get", "user")
+      .then((res) => {
+        if (res.user) {
+          dispatch(addCurrentUser(res.user));
+        } else {
+          console.log("userRoleError", res.error);
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+      });
+
+    sendRequest("get", "notifications").then((res) => {
+      if (res.status) {
+        dispatch(addNotifications(res.notifications));
+      }
+    });
   }, []);
 
   useEffect(() => {
@@ -170,21 +195,6 @@ function App() {
       })
       .catch((err) => console.log(err));
   }, [updateWishlist]);
-
-  useEffect(() => {
-    sendRequest("get", "user")
-      .then((res) => {
-        if (res.user) {
-          dispatch(addCurrentUser(res.user));
-        } else {
-          setUserRole(null);
-          console.log("userRoleError", res.error);
-        }
-      })
-      .catch((err) => {
-        console.log(err);
-      });
-  }, []);
 
   const handleClick = (e) => {
     const targetElement = e.target.getAttribute("class");
@@ -199,8 +209,18 @@ function App() {
     }
   };
 
+  onMessage(messaging, (payload) => {
+    console.log("message", payload);
+    sendRequest("post", "saveNotification", {
+      title: payload.data.title,
+      description: payload.data.body,
+      read: false,
+    });
+    successToast(<Message notification={payload.data} />);
+  });
+
   return (
-    <div className="app" onClick={handleClick}>
+    <div className="app h-100" onClick={handleClick}>
       <BrowserRouter>
         <Routes>
           <Route
@@ -266,6 +286,14 @@ function App() {
             element={
               <Preloader>
                 <Login />
+              </Preloader>
+            }
+          />
+          <Route
+            path="/verify"
+            element={
+              <Preloader>
+                <Verify />
               </Preloader>
             }
           />
@@ -362,6 +390,7 @@ function App() {
 
           <Route
             path="/admin"
+            exact
             element={
               <AdminAuth>
                 <MainLayout />
@@ -376,11 +405,21 @@ function App() {
             <Route path="customers" element={<Customers />} />
             <Route path="admins" element={<Admins />} />
             <Route path="profile" element={<Profile />} />
-            <Route path="stats" element={<Blank />} />
+            <Route path="cms" element={<CMSPage />}>
+              <Route index element={<CMSIndex />} />
+              <Route path="homepage" element={<HomePage />} />
+              <Route path="about" element={<AboutPage />} />
+              <Route path="contact" element={<ContactPage />} />
+              <Route path="settings" element={<Setting />}>
+                <Route index element={<SiteSetting />} />
+                <Route path="paymentSetting" element={<Payments />} />
+              </Route>
+            </Route>
           </Route>
         </Routes>
         <ScrollToTop />
       </BrowserRouter>
+      <ToastContainer />
     </div>
   );
 }

@@ -1,4 +1,3 @@
-import Skeleton from "react-loading-skeleton";
 import "react-loading-skeleton/dist/skeleton.css";
 import { useSelector, useDispatch } from "react-redux";
 import { addSingleProduct } from "../../../redux/reducers/singleProductReducer";
@@ -208,7 +207,7 @@ function HomeBestSellCard({
         </div>
         <div className="product-price mt-10">
           <>
-            <span>${(price / 100) * discount}</span>
+            <span>${(price / 100) * 100 - discount}</span>
             <span className="old-price">{price}</span>
           </>
         </div>

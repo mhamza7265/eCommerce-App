@@ -1,4 +1,8 @@
+import { useState } from "react";
 import BASE_URL from "../../../utility-functions/config";
+import { LazyLoadImage } from "react-lazy-load-image-component";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
 
 function ProductsRow({
   id,
@@ -10,17 +14,33 @@ function ProductsRow({
   quantity,
   price,
   discount,
+  cost,
   images,
   deleteProduct,
   setEditProductModalIsOpen,
   setProductId,
 }) {
+  const [open, setOpen] = useState(false);
   const handleDeleteClick = () => {
     deleteProduct(id);
   };
 
   const handleEditClick = () => {
-    setProductId(id);
+    setProductId({
+      id,
+      sku,
+      name,
+      description,
+      category,
+      quantity,
+      price,
+      discount,
+      cost,
+      images: {
+        image1: BASE_URL + "/" + images[0],
+        image2: BASE_URL + "/" + images[1],
+      },
+    });
     setEditProductModalIsOpen(true);
   };
 
@@ -32,13 +52,23 @@ function ProductsRow({
       <td>{description}</td>
       <td>{category}</td>
       <td>{quantity}</td>
+      <td>{cost}</td>
       <td>{price}</td>
       <td>{discount}%</td>
       <td>
-        <img className="category-img" src={BASE_URL + "/" + images[0]} />
-      </td>
-      <td>
-        <img className="category-img" src={BASE_URL + "/" + images[1]} />
+        <LazyLoadImage
+          className="category-img cursor-pointer"
+          src={`${BASE_URL}/${images[0]}`}
+          onClick={() => setOpen(true)}
+        />
+
+        <Lightbox
+          open={open}
+          close={() => setOpen(false)}
+          slides={images.map((image) => {
+            return { src: `${BASE_URL}/${image}` };
+          })}
+        />
       </td>
       <td>
         <div className="d-flex justify-content-between">

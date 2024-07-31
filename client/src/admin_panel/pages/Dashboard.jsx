@@ -4,9 +4,7 @@ import DashboardWrapper, {
   DashboardWrapperMain,
   DashboardWrapperRight,
 } from "../components/dashboard-wrapper/DashboardWrapper";
-import SummaryBox, {
-  SummaryBoxSpecial,
-} from "../components/summary-box/SummaryBox";
+import SummaryBox from "../components/summary-box/SummaryBox";
 import { colors } from "../constants";
 import {
   Chart as ChartJS,
@@ -36,7 +34,7 @@ ChartJS.register(
 const Dashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   useEffect(() => {
-    sendRequest("post", "dashboard")
+    sendRequest("post", "dashboard", undefined, undefined, "admin")
       .then((res) => {
         if (res.status) {
           setDashboardData(res.data);
@@ -123,6 +121,7 @@ const Dashboard = () => {
   };
   return (
     <DashboardWrapper>
+      <h3 className="mb-4">Dashboard</h3>
       <DashboardWrapperMain>
         <div className="row">
           <div className="col-8 col-md-12">
@@ -168,7 +167,7 @@ export default Dashboard;
 const RevenueByMonthsChart = () => {
   const [salesByMonth, setSalesByMonth] = useState(null);
   useEffect(() => {
-    sendRequest("post", "dashboard")
+    sendRequest("post", "dashboard", undefined, undefined, "admin")
       .then((res) => {
         if (res.status) {
           setSalesByMonth(res.data.salesByMonths);

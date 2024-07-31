@@ -1,4 +1,3 @@
-import { useSelector } from "react-redux";
 import CategoryRow from "./CategoryRow";
 import { Modal } from "react-bootstrap";
 import { useEffect, useState } from "react";
@@ -7,8 +6,6 @@ import sendRequest, {
   errorToast,
   successToast,
 } from "../../../utility-functions/apiManager";
-import { useDispatch } from "react-redux";
-import { addCategory } from "../../../redux/reducers/categoryReducer";
 import Paginate from "../../components/paginate/Paginate";
 
 function Categories() {
@@ -16,7 +13,7 @@ function Categories() {
   const [newCategoryModalIsOpen, setNewCategoryModalIsOpen] = useState(false);
   const [editCategoryModalIsOpen, setEditCategoryModalIsOpen] = useState(false);
   const [categoryId, setCategoryId] = useState(null);
-  const dispatch = useDispatch();
+  const [imageFile, setImageFile] = useState(null);
   const {
     register: registerNew,
     handleSubmit: handleNewCatSubmit,
@@ -32,7 +29,7 @@ function Categories() {
   } = useForm();
 
   useEffect(() => {
-    sendRequest("get", "categories/listing")
+    sendRequest("get", "categories/listing", undefined, undefined, "admin")
       .then((res) => {
         if (res.status) {
           setCategoriesList(res.categories);
@@ -50,15 +47,24 @@ function Categories() {
     formData.append("file", data.image[0]);
     formData.append("name", data.name);
     formData.append("description", data.desc);
-    sendRequest("post", "category/add", formData, "formData")
+
+    sendRequest("post", "category/add", formData, "formData", "admin")
       .then((res) => {
         if (res.status) {
           successToast("Category added");
-          sendRequest("get", "category")
+          sendRequest(
+            "get",
+            `categories/listing?page=${categoriesList?.page}`,
+            undefined,
+            undefined,
+            "admin"
+          )
             .then((res) => {
+              setNewCategoryModalIsOpen(false);
               if (res.status) {
-                dispatch(addCategory(res.categories));
+                setCategoriesList(res.categories);
                 setNewCategoryModalIsOpen(false);
+                setImageFile(null);
               }
             })
             .catch((err) => {
@@ -76,22 +82,36 @@ function Categories() {
     formData.append("file", data.image[0]);
     formData.append("name", data.name);
     formData.append("description", data.desc);
-    sendRequest("put", `category/${categoryId.id}`, formData, "formData")
+    sendRequest(
+      "put",
+      `category/${categoryId.id}`,
+      formData,
+      "formData",
+      "admin"
+    )
       .then((res) => {
         if (res.status) {
           successToast("Category updated");
-          sendRequest("get", "category")
+          sendRequest(
+            "get",
+            `categories/listing?page=${categoriesList?.page}`,
+            undefined,
+            undefined,
+            "admin"
+          )
             .then((res) => {
+              setEditCategoryModalIsOpen(false);
               if (res.status) {
-                dispatch(addCategory(res.categories));
-                setEditCategoryModalIsOpen(false);
+                setCategoriesList(res.categories);
+                setNewCategoryModalIsOpen(false);
+                setImageFile(null);
               }
             })
             .catch((err) => {
               console.log(err);
             });
         } else {
-          errorToast("Category could not be updated");
+          errorToast(res.error);
         }
       })
       .catch((err) => console.log(err));
@@ -99,10 +119,22 @@ function Categories() {
 
   const handleDeleteClick = () => {
     if (confirm("Do you want to remove this category?")) {
-      sendRequest("delete", `category/${categoryId.id}`).then((res) => {
+      sendRequest(
+        "delete",
+        `category/${categoryId.id}`,
+        undefined,
+        undefined,
+        "admin"
+      ).then((res) => {
         if (res.status) {
           successToast("Category removed");
-          sendRequest("get", `categories/listing?page=${categoriesList?.page}`)
+          sendRequest(
+            "get",
+            `categories/listing?page=${categoriesList?.page}`,
+            undefined,
+            undefined,
+            "admin"
+          )
             .then((res) => {
               if (res.status) {
                 setCategoriesList(res.categories);
@@ -120,6 +152,14 @@ function Categories() {
     }
   };
 
+  const handleFileChange = (e) => {
+    setImageFile(URL.createObjectURL(e.target.files[0]));
+    setCategoryId({
+      ...categoryId,
+      image: URL.createObjectURL(e.target.files[0]),
+    });
+  };
+
   return (
     <div className="container">
       <h3>Categories</h3>
@@ -128,7 +168,7 @@ function Categories() {
           className="btn btn-sm btn-fill-out btn-block"
           onClick={() => setNewCategoryModalIsOpen(true)}
         >
-          Add New Category
+          <i className="fa fa-plus"></i> Add New Category
         </button>
       </div>
       <table className="bg-white">
@@ -160,21 +200,17 @@ function Categories() {
             ))
           ) : (
             <tr>
-              <td colSpan={6} className="text-center">
+              <td colSpan={"100%"} className="text-center">
                 No categories found
               </td>
             </tr>
           )}
-          <tr>
-            <td colSpan={6} className="p-0">
-              <Paginate
-                endPoint={"categories/listing"}
-                state={categoriesList}
-                setState={setCategoriesList}
-                formType={"res.categories"}
-              />
-            </td>
-          </tr>
+          <Paginate
+            endPoint={"categories/listing"}
+            state={categoriesList}
+            setState={setCategoriesList}
+            formType={"categories"}
+          />
         </tbody>
       </table>
 
@@ -188,6 +224,7 @@ function Categories() {
           onHide={() => {
             resetNew();
             setNewCategoryModalIsOpen(false);
+            setImageFile(null);
           }}
           style={{ zIndex: "9999", padding: 0 }}
         >
@@ -222,15 +259,25 @@ function Categories() {
                 </div>
                 <p className="text-danger">{errorsNew?.desc?.message}</p>
                 <div className="form-group">
-                  <label className="form-label">Image</label>
-                  <input
-                    {...registerNew("image", {
-                      required: "This field is required",
-                    })}
-                    className="form-control"
-                    type="file"
-                    name="image"
-                  />
+                  <label className="form-label w-100">Image</label>
+                  <div className="d-flex align-items-end">
+                    <input
+                      {...registerNew("image", {
+                        required: "This field is required",
+                      })}
+                      className="form-control image-input"
+                      type="file"
+                      name="image"
+                      onChange={handleFileChange}
+                    />
+                    {imageFile && (
+                      <img
+                        className="prof-pic ms-3"
+                        style={{ borderRadius: "50%" }}
+                        src={imageFile}
+                      />
+                    )}
+                  </div>
                 </div>
                 <p className="text-danger">{errorsNew?.image?.message}</p>
                 <button
@@ -254,6 +301,7 @@ function Categories() {
           onHide={() => {
             resetEdit();
             setEditCategoryModalIsOpen(false);
+            setImageFile(null);
           }}
           style={{ zIndex: "9999", padding: 0 }}
         >
@@ -270,6 +318,10 @@ function Categories() {
                     className="form-control"
                     name="name"
                     type="text"
+                    value={categoryId?.name}
+                    onChange={(e) =>
+                      setCategoryId({ ...categoryId, name: e.target.value })
+                    }
                   />
                 </div>
                 <div className="form-group">
@@ -279,16 +331,33 @@ function Categories() {
                     className="form-control"
                     name="desc"
                     type="text"
+                    value={categoryId?.description}
+                    onChange={(e) =>
+                      setCategoryId({
+                        ...categoryId,
+                        description: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <div className="form-group">
                   <label className="form-label">Image</label>
-                  <input
-                    {...registerEdit("image")}
-                    className="form-control"
-                    type="file"
-                    name="image"
-                  />
+                  <div className="d-flex align-items-end">
+                    <input
+                      {...registerEdit("image")}
+                      className="form-control image-input"
+                      type="file"
+                      name="image"
+                      onChange={handleFileChange}
+                    />
+                    {categoryId?.image && (
+                      <img
+                        className="prof-pic ms-3"
+                        style={{ borderRadius: "50%" }}
+                        src={categoryId?.image}
+                      />
+                    )}
+                  </div>
                 </div>
                 <button
                   className="btn btn-sm btn-heading btn-block hover-up"

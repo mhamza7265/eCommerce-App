@@ -7,8 +7,10 @@ import sendRequest, {
   successToast,
 } from "../../utility-functions/apiManager";
 import BASE_URL from "../../utility-functions/config";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import Select from "react-select";
+import { BarLoader } from "react-spinners";
+import { LazyLoadImage } from "react-lazy-load-image-component";
 
 function Orders() {
   const [orders, setOrders] = useState(null);
@@ -19,15 +21,25 @@ function Orders() {
   const [orderedCartItems, setOrderedCartItems] = useState(null);
   const [allDropdownsHidden, setAllDropdownsHidden] = useState(false);
   const [typeOfOrders, setTypeOfOrders] = useState("all");
-  const [allUsers, setAllUsers] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [statusbarLoading, setStatusbarLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [paginateIsDisabled, setPaginateIsDisabled] = useState(false);
   const [options, setOptions] = useState([]);
-  const [status, setStatus] = useState("");
+
+  const override = {
+    display: "block",
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    margin: "0 auto",
+    borderColor: "red",
+    width: "100%",
+    backgroundColor: "#000",
+  };
 
   const {
     register,
-    control,
     reset,
     handleSubmit,
     formState: { errors },
@@ -37,8 +49,11 @@ function Orders() {
     sendRequest(
       "get",
       typeOfOrders == "all"
-        ? `orders/listing?page=${orders?.page}`
-        : `customerorders/listing/${selectedUser.value}?page=${orders?.page}`
+        ? `orders/listing`
+        : `customerorders/listing/${selectedUser.value}`,
+      undefined,
+      undefined,
+      "admin"
     )
       .then((res) => {
         if (res.status) {
@@ -53,18 +68,29 @@ function Orders() {
   }, []);
 
   const onSubmit = (data) => {
-    sendRequest("put", "order/process", {
-      orderId: orderId.id,
-      orderStatus: data.orderStatus,
-    })
+    setStatusbarLoading(true);
+    sendRequest(
+      "put",
+      "order/process",
+      {
+        orderId: orderId.id,
+        orderStatus: data.orderStatus,
+      },
+      undefined,
+      "admin"
+    )
       .then((res) => {
+        setStatusbarLoading(false);
         if (res.status) {
           successToast("Status Updated!");
           sendRequest(
             "get",
             typeOfOrders == "all"
               ? `orders/listing?page=${orders?.page}`
-              : `customerorders/listing/${selectedUser.value}?page=${orders?.page}`
+              : `customerorders/listing/${selectedUser.value}?page=${orders?.page}`,
+            undefined,
+            undefined,
+            "admin"
           )
             .then((res) => {
               if (res.status) {
@@ -80,6 +106,7 @@ function Orders() {
         }
       })
       .catch((err) => {
+        setStatusbarLoading(false);
         console.log(err);
       });
   };
@@ -87,7 +114,7 @@ function Orders() {
   const handleRadioChange = (e) => {
     const type = e.target.getAttribute("data");
     if (type == "all") {
-      sendRequest("get", "orders/listing")
+      sendRequest("get", "orders/listing", undefined, undefined, "admin")
         .then((res) => {
           if (res.status) {
             successToast("List updated");
@@ -101,11 +128,8 @@ function Orders() {
     } else {
       setOrders([]);
       setTypeOfOrders("specific");
-      sendRequest("get", "users")
+      sendRequest("get", "users", undefined, undefined, "admin")
         .then((res) => {
-          setAllUsers(res.users);
-          console.log("users", res.users);
-
           let user = res.users.map((item) => {
             const obj = {
               value: item?._id,
@@ -127,7 +151,13 @@ function Orders() {
   };
 
   const handleUserSubmitClick = () => {
-    sendRequest("get", `customerorders/listing/${selectedUser.value}`)
+    sendRequest(
+      "get",
+      `customerorders/listing/${selectedUser.value}`,
+      undefined,
+      undefined,
+      "admin"
+    )
       .then((res) => {
         if (res.status) {
           successToast("List Updated");
@@ -142,15 +172,20 @@ function Orders() {
   const handlePaginateClick = (e) => {
     const pageNumber = e.target.getAttribute("data");
     setPaginateIsDisabled(true);
+    setLoading(true);
     sendRequest(
       "get",
       `${
         typeOfOrders == "all"
           ? `orders/listing?page=${pageNumber}`
           : `customerorders/listing/${selectedUser.value}?page=${pageNumber}`
-      }`
+      }`,
+      undefined,
+      undefined,
+      "admin"
     )
       .then((res) => {
+        setLoading(false);
         if (res.status) {
           setPaginateIsDisabled(false);
           setOrders(res.orders);
@@ -160,6 +195,7 @@ function Orders() {
         }
       })
       .catch((err) => {
+        setLoading(false);
         setPaginateIsDisabled(false);
         console.log(err);
         errorToast("Internal server error");
@@ -169,6 +205,7 @@ function Orders() {
   const handlePaginateArrowsClick = (e) => {
     const arrowType = e.target.getAttribute("data");
     setPaginateIsDisabled(true);
+    setLoading(true);
     sendRequest(
       "get",
       `${
@@ -191,19 +228,23 @@ function Orders() {
                   }`
                 : null
             }`
-      }`
+      }`,
+      undefined,
+      undefined,
+      "admin"
     )
       .then((res) => {
+        setLoading(false);
         if (res.status) {
           setPaginateIsDisabled(false);
           setOrders(res.orders);
-          successToast("Orders list updated");
         } else {
           setPaginateIsDisabled(false);
           errorToast("Orders list could not be updated");
         }
       })
       .catch((err) => {
+        setLoading(false);
         setPaginateIsDisabled(false);
         console.log(err);
         errorToast("Internal server error");
@@ -218,7 +259,10 @@ function Orders() {
         ? `orders/listing?search=true&orderId=${value}`
         : typeOfOrders == "all"
         ? "orders/listing"
-        : `customerorders/listing/${selectedUser.value}`
+        : `customerorders/listing/${selectedUser.value}`,
+      undefined,
+      undefined,
+      "admin"
     )
       .then((res) => {
         if (res.status) {
@@ -356,20 +400,28 @@ function Orders() {
             ))
           ) : (
             <tr>
-              <td colSpan={8} className="text-center">
+              <td colSpan={"100%"} className="text-center">
                 No order(s) found
               </td>
             </tr>
           )}
           <tr>
-            <td colSpan={8}>
+            <td colSpan={"100%"} className="p-0">
               <div
-                className={`pagination d-flex justify-content-end p-3 bg-white ${
+                className={`pagination position-relative d-flex justify-content-end p-3 bg-white ${
                   paginateIsDisabled && "disabled"
                 }`}
               >
+                <BarLoader
+                  color={"#ffffff"}
+                  loading={loading}
+                  cssOverride={override}
+                  size={150}
+                  aria-label="Loading Spinner"
+                  data-testid="loader"
+                />
                 <p
-                  className={`me-1 paginate cursor-pointer paginate-arrow ${
+                  className={`paginate cursor-pointer paginate-arrow ${
                     !orders?.hasPrevPage && "disable"
                   }`}
                   data={"decrease"}
@@ -380,7 +432,7 @@ function Orders() {
                 {orders &&
                   [...Array(orders?.totalPages)].map((item, i) => (
                     <p
-                      className={`me-1 paginate cursor-pointer ${
+                      className={`paginate cursor-pointer ${
                         orders?.page == i + 1 && "active"
                       } ${paginateIsDisabled && "disable"}`}
                       onClick={handlePaginateClick}
@@ -390,8 +442,33 @@ function Orders() {
                       {i + 1}
                     </p>
                   ))}
+
+                {/* {orders &&
+                  [...Array(orders?.totalPages)].map((item, i) => {
+                    if (
+                      orders?.totalPages <= 7 ||
+                      i < 4 ||
+                      i > orders?.totalPages - 2
+                    ) {
+                      return (
+                        <p
+                          className={`me-1 paginate cursor-pointer ${
+                            orders?.page == i + 1 && "active"
+                          } ${paginateIsDisabled && "disable"}`}
+                          onClick={handlePaginateClick}
+                          key={i}
+                          data={i + 1}
+                        >
+                          {i + 1}
+                        </p>
+                      );
+                    } else if (i === 3 || i === orders?.totalPages - 4) {
+                      return <p key={i}>...</p>;
+                    }
+                    return null;
+                  })} */}
                 <p
-                  className={`me-1 paginate cursor-pointer paginate-arrow ${
+                  className={`paginate cursor-pointer paginate-arrow ${
                     !orders?.hasNextPage && "disable"
                   }`}
                   data={"increase"}
@@ -418,10 +495,21 @@ function Orders() {
           style={{ zIndex: "9999", padding: 0 }}
         >
           <Modal.Header style={{ border: "none" }} closeButton>
-            <h5>Order ID: {orderId.id}</h5>
+            <h5>Order ID: {orderId.orderId}</h5>
           </Modal.Header>
           <Modal.Body>
-            <form onSubmit={handleSubmit(onSubmit)} className="mb-5 mt-3">
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="mb-5 mt-3 position-relative"
+            >
+              <BarLoader
+                color={"#ffffff"}
+                loading={statusbarLoading}
+                cssOverride={override}
+                size={150}
+                aria-label="Loading Spinner"
+                data-testid="loader"
+              />
               <label>Select an option</label>
               {/* <Controller
                 name="orderStatus"
@@ -496,7 +584,7 @@ function Orders() {
                     Object.values(orderedCartItems).map((item, i) => (
                       <tr key={i}>
                         <td>
-                          <img
+                          <LazyLoadImage
                             className="prod-img"
                             src={`${BASE_URL}/${item.images[0][0]}`}
                           />

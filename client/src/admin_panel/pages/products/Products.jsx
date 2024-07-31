@@ -8,14 +8,20 @@ import { Modal } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { useSelector } from "react-redux";
 import Paginate from "../../components/paginate/Paginate";
+import Lightbox from "yet-another-react-lightbox";
+import "yet-another-react-lightbox/styles.css";
+import { LazyLoadImage } from "react-lazy-load-image-component";
+import BASE_URL from "../../../utility-functions/config";
 
 function Products() {
   const categories = useSelector((state) => state.categories.categories);
   const [productsByPage, setProductsByPage] = useState(null);
-  const [paginateIsDisabled, setPaginateIsDisabled] = useState(false);
   const [newProductModalIsOpen, setNewProductModalIsOpen] = useState(false);
   const [editProductModalIsOpen, setEditProductModalIsOpen] = useState(false);
   const [productId, setProductId] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
+  const [imageLengthError, setImageLengthError] = useState(false);
+  const [open, setOpen] = useState(false);
   const {
     register: registerNew,
     handleSubmit: handleNewProSubmit,
@@ -31,7 +37,7 @@ function Products() {
   } = useForm();
 
   useEffect(() => {
-    sendRequest("get", "products/listing")
+    sendRequest("get", "products/listing", undefined, undefined, "admin")
       .then((res) => {
         if (res.status) {
           setProductsByPage(res.products);
@@ -45,6 +51,7 @@ function Products() {
   }, []);
 
   const onNewProductSubmit = (data) => {
+    if (data.image1.length < 2) return setImageLengthError(true);
     const formData = new FormData();
     formData.append("file", data.image1[0]);
     formData.append("file", data.image1[1]);
@@ -58,16 +65,24 @@ function Products() {
     formData.append("quantity", data.quantity);
     formData.append("sku", data.sku);
     formData.append("category", data.category);
-    sendRequest("post", "product/add", formData, "formData")
+
+    sendRequest("post", "product/add", formData, "formData", "admin")
       .then((res) => {
         console.log("prodAdd", res);
         if (res.status) {
           successToast("Product added successfully");
-          sendRequest("get", `products/listing?page=${productsByPage?.page}`)
+          sendRequest(
+            "get",
+            `products/listing?page=${productsByPage?.page}`,
+            undefined,
+            undefined,
+            "admin"
+          )
             .then((res) => {
               if (res.status) {
                 setProductsByPage(res.products);
                 setNewProductModalIsOpen(false);
+                setImageFile(null);
               }
             })
             .catch((err) => {
@@ -85,11 +100,17 @@ function Products() {
 
   const deleteProduct = (prodId) => {
     if (confirm("Do you want to remove this product?")) {
-      sendRequest("delete", `product/${prodId}`)
+      sendRequest("delete", `product/${prodId}`, undefined, undefined, "admin")
         .then((res) => {
           if (res.status) {
             successToast("Product removed successfully!");
-            sendRequest("get", `products/listing?page=${productsByPage?.page}`)
+            sendRequest(
+              "get",
+              `products/listing?page=${productsByPage?.page}`,
+              undefined,
+              undefined,
+              "admin"
+            )
               .then((res) => {
                 if (res.status) {
                   setProductsByPage(res.products);
@@ -110,7 +131,8 @@ function Products() {
   };
 
   const onEditProductSubmit = (data) => {
-    console.log("formData", data);
+    if (data.image1.length > 0 && data.image1.length < 2)
+      return setImageLengthError(true);
     const formData = new FormData();
     formData.append("file", data.image1[0]);
     formData.append("file", data.image1[1]);
@@ -124,16 +146,24 @@ function Products() {
     formData.append("quantity", data.quantity);
     formData.append("sku", data.sku);
     formData.append("category", data.category);
-    sendRequest("put", `product/${productId}`, formData, "formData")
+    sendRequest("put", `product/${productId}`, formData, "formData", "admin")
       .then((res) => {
         console.log("updateProd", res);
         if (res.status) {
           successToast("Product updated successfully");
-          sendRequest("get", `products/listing?page=${productsByPage.page}`)
+          sendRequest(
+            "get",
+            `products/listing?page=${productsByPage.page}`,
+            undefined,
+            undefined,
+            "admin"
+          )
             .then((res) => {
               if (res.status) {
                 setProductsByPage(res.products);
                 setEditProductModalIsOpen(false);
+                setImageFile(null);
+                setImageLengthError(false);
               }
             })
             .catch((err) => {
@@ -149,6 +179,37 @@ function Products() {
       });
   };
 
+  const handleFileChange = (e) => {
+    setImageFile(
+      e.target.files.length > 1
+        ? {
+            image1: URL.createObjectURL(e.target.files[0]),
+            image2: URL.createObjectURL(e.target.files[1]),
+          }
+        : {
+            image1: URL.createObjectURL(e.target.files[0]),
+          }
+    );
+    setProductId(
+      e.target.files.length > 1
+        ? {
+            ...productId,
+            images: {
+              image1: URL.createObjectURL(e.target.files[0]),
+              image2: URL.createObjectURL(e.target.files[1]),
+            },
+          }
+        : {
+            ...productId,
+            images: {
+              image1: URL.createObjectURL(e.target.files[0]),
+              image2: null,
+            },
+          }
+    );
+    setImageLengthError(false);
+  };
+
   return (
     <div className="container">
       <h3>Products</h3>
@@ -157,7 +218,7 @@ function Products() {
           className="btn btn-sm btn-fill-out btn-block"
           onClick={() => setNewProductModalIsOpen(true)}
         >
-          Add New Products
+          <i className="fa fa-plus"></i> Add New Products
         </button>
       </div>
       <table className="bg-white mb-0">
@@ -169,9 +230,9 @@ function Products() {
             <th>Description</th>
             <th>Category</th>
             <th>Available Quantity</th>
+            <th>Cost</th>
             <th>Price</th>
             <th>Discount</th>
-            <th>Image</th>
             <th>Image</th>
             <th>Action</th>
           </tr>
@@ -190,6 +251,7 @@ function Products() {
                 quantity={item.quantity}
                 price={item.price}
                 discount={item.discount.discountValue}
+                cost={item.cost}
                 images={item.images}
                 deleteProduct={deleteProduct}
                 setEditProductModalIsOpen={setEditProductModalIsOpen}
@@ -198,21 +260,17 @@ function Products() {
             ))
           ) : (
             <tr>
-              <td colSpan={11} className="text-center">
+              <td colSpan={"100%"} className="text-center">
                 No products(s) found
               </td>
             </tr>
           )}
-          <tr>
-            <td colSpan={11} className="p-0">
-              <Paginate
-                endPoint={"products/listing"}
-                state={productsByPage}
-                setState={setProductsByPage}
-                formType={"res.products"}
-              />
-            </td>
-          </tr>
+          <Paginate
+            endPoint={"products/listing"}
+            state={productsByPage}
+            setState={setProductsByPage}
+            formType={"products"}
+          />
         </tbody>
       </table>
 
@@ -226,6 +284,8 @@ function Products() {
           onHide={() => {
             resetNew();
             setNewProductModalIsOpen(false);
+            setImageFile(null);
+            setImageLengthError(false);
           }}
           style={{ zIndex: "9999", padding: 0 }}
         >
@@ -364,18 +424,43 @@ function Products() {
                   {errorsNew?.discountValue?.message}
                 </p>
                 <div className="form-group">
-                  <label className="form-label">Image</label>
-                  <input
-                    {...registerNew("image1", {
-                      required: "This field is required",
-                    })}
-                    className="form-control"
-                    type="file"
-                    name="image1"
-                    multiple
-                  />
+                  <label className="form-label">
+                    Image <span className="text-muted">(select two)</span>
+                  </label>
+                  <div className="d-flex align-items-end">
+                    <input
+                      {...registerNew("image1", {
+                        required: "This field is required",
+                      })}
+                      className="form-control image-input"
+                      type="file"
+                      name="image1"
+                      multiple
+                      onChange={handleFileChange}
+                    />
+                    {imageFile && (
+                      <div className="d-flex align-items-end">
+                        <img
+                          className="prof-pic ms-3"
+                          style={{ borderRadius: "50%" }}
+                          src={imageFile.image1}
+                        />
+                        {imageFile?.image2 && (
+                          <img
+                            className="prof-pic ms-3"
+                            style={{ borderRadius: "50%" }}
+                            src={imageFile.image2}
+                          />
+                        )}
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-danger">{errorsNew?.image1?.message}</p>
+                  {imageLengthError && (
+                    <p className="text-danger">Please select two images</p>
+                  )}
                 </div>
-                <p className="text-danger">{errorsNew?.image1?.message}</p>
+
                 <button
                   className="btn btn-sm btn-heading btn-block hover-up"
                   type="submit"
@@ -398,6 +483,8 @@ function Products() {
           onHide={() => {
             resetEdit();
             setEditProductModalIsOpen(false);
+            setImageFile(null);
+            setImageLengthError(false);
           }}
           style={{ zIndex: "9999", padding: 0 }}
         >
@@ -414,6 +501,10 @@ function Products() {
                     className="form-control"
                     name="sku"
                     type="text"
+                    value={productId?.sku}
+                    onChange={(e) =>
+                      setProductId({ ...productId, sku: e.target.value })
+                    }
                   />
                 </div>
                 <p className="text-danger">{errorsEdit?.sku?.message}</p>
@@ -424,6 +515,10 @@ function Products() {
                     className="form-control"
                     name="name"
                     type="text"
+                    value={productId?.name}
+                    onChange={(e) =>
+                      setProductId({ ...productId, name: e.target.value })
+                    }
                   />
                 </div>
                 <p className="text-danger">{errorsEdit?.name?.message}</p>
@@ -434,6 +529,13 @@ function Products() {
                     className="form-control"
                     name="description"
                     type="text"
+                    value={productId?.description}
+                    onChange={(e) =>
+                      setProductId({
+                        ...productId,
+                        description: e.target.value,
+                      })
+                    }
                   />
                 </div>
                 <p className="text-danger">
@@ -446,6 +548,10 @@ function Products() {
                     className="form-control"
                     name="category"
                     type="text"
+                    value={productId?.category}
+                    onChange={(e) =>
+                      setProductId({ ...productId, category: e.target.value })
+                    }
                   >
                     <option value="" placeholder="Select an option">
                       Select an option
@@ -466,6 +572,10 @@ function Products() {
                     className="form-control"
                     name="quantity"
                     type="text"
+                    value={productId?.quantity}
+                    onChange={(e) =>
+                      setProductId({ ...productId, quantity: e.target.value })
+                    }
                   />
                 </div>
                 <p className="text-danger">{errorsEdit?.quantity?.message}</p>
@@ -476,6 +586,10 @@ function Products() {
                     className="form-control"
                     name="price"
                     type="text"
+                    value={productId?.price}
+                    onChange={(e) =>
+                      setProductId({ ...productId, price: e.target.value })
+                    }
                   />
                 </div>
                 <p className="text-danger">{errorsEdit?.price?.message}</p>
@@ -486,6 +600,10 @@ function Products() {
                     className="form-control"
                     name="cost"
                     type="text"
+                    value={productId?.cost}
+                    onChange={(e) =>
+                      setProductId({ ...productId, cost: e.target.value })
+                    }
                   />
                 </div>
                 <p className="text-danger">{errorsEdit?.cost?.message}</p>
@@ -516,21 +634,55 @@ function Products() {
                     className="form-control"
                     name="discountValue"
                     type="text"
+                    value={productId?.discount}
+                    onChange={(e) =>
+                      setProductId({ ...productId, discount: e.target.value })
+                    }
                   />
                 </div>
                 <p className="text-danger">
                   {errorsEdit?.discountValue?.message}
                 </p>
                 <div className="form-group">
-                  <label className="form-label">Image</label>
-                  <input
-                    {...registerEdit("image1")}
-                    className="form-control"
-                    type="file"
-                    name="image1"
-                  />
+                  <label className="form-label">
+                    Image <span className="text-muted">(select two)</span>
+                  </label>
+                  <div className="d-flex align-items-end">
+                    <input
+                      {...registerEdit("image1")}
+                      className="form-control image-input"
+                      type="file"
+                      name="image1"
+                      multiple
+                      onChange={handleFileChange}
+                    />
+                    {productId?.images && (
+                      <div className="d-flex align-items-end">
+                        <LazyLoadImage
+                          className="prof-pic ms-3 cursor-pointer"
+                          style={{ borderRadius: "50%" }}
+                          src={`${productId?.images?.image1}`}
+                          onClick={() => setOpen(true)}
+                        />
+
+                        <Lightbox
+                          open={open}
+                          close={() => setOpen(false)}
+                          slides={Object.values(productId?.images).map(
+                            (image) => {
+                              return { src: `${image}` };
+                            }
+                          )}
+                        />
+                      </div>
+                    )}
+                  </div>
+                  {imageLengthError && (
+                    <p className="text-danger">Please select two images</p>
+                  )}
                 </div>
                 <p className="text-danger">{errorsEdit?.image1?.message}</p>
+
                 <button
                   className="btn btn-sm btn-heading btn-block hover-up"
                   type="submit"

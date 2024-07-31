@@ -1,7 +1,3 @@
-import about from "../../assets/imgs/page/about-1.webp";
-import about2 from "../../assets/imgs/page/about-2.webp";
-import about3 from "../../assets/imgs/page/about-3.webp";
-import about4 from "../../assets/imgs/page/about-4.webp";
 import about5 from "../../assets/imgs/page/about-5.webp";
 import about6 from "../../assets/imgs/page/about-6.webp";
 import about8 from "../../assets/imgs/page/about-8.webp";
@@ -21,15 +17,42 @@ import CountUp from "react-countup";
 import ReactVisibilitySensor from "react-visibility-sensor";
 import { LazyLoadImage } from "react-lazy-load-image-component";
 import { Link } from "react-router-dom";
+import sendRequest from "../../utility-functions/apiManager";
+import BASE_URL from "../../utility-functions/config";
 
 function About() {
   const [loading, setLoading] = useState(true);
   const [viewPortEntered, setViewPortEntered] = useState(false);
+  const [sectionOne, setSectionOne] = useState(null);
+  const [sectionTwo, setSectionTwo] = useState(null);
+  const [sectionThree, setSectionThree] = useState(null);
+  const [sectionFour, setSectionFour] = useState(null);
 
   useEffect(() => {
     setTimeout(() => {
       setLoading(false);
     }, 5000);
+
+    sendRequest("get", "getSection/one").then((res) => {
+      if (res.status) {
+        setSectionOne(res.section[0]);
+      }
+    });
+    sendRequest("get", "getSection/two").then((res) => {
+      if (res.status) {
+        setSectionTwo(res.section);
+      }
+    });
+    sendRequest("get", "getSection/three").then((res) => {
+      if (res.status) {
+        setSectionThree(res.section[0]);
+      }
+    });
+    sendRequest("get", "getSection/four").then((res) => {
+      if (res.status) {
+        setSectionFour(res.section);
+      }
+    });
   }, []);
 
   var settings = {
@@ -98,7 +121,7 @@ function About() {
                     />
                   ) : (
                     <LazyLoadImage
-                      src={about}
+                      src={`${BASE_URL}/${sectionOne?.image}`}
                       alt=""
                       className="border-radius-15 mb-md-3 mb-lg-0 mb-sm-4"
                     />
@@ -116,25 +139,8 @@ function About() {
                       </div>
                     ) : (
                       <>
-                        <h2 className="mb-30">Welcome to Nest</h2>
-                        <p className="mb-25">
-                          Lorem ipsum dolor sit amet, consectetur adipiscing
-                          elit, sed do eiusmod tempor incididunt ut labore et
-                          dolore magna aliqua. Ut enim ad minim veniam, quis
-                          nostrud exercitation ullamco laboris nisi ut aliquip
-                          ex ea commodo consequat. Duis aute irure dolor in
-                          reprehenderit in voluptate id est laborum.
-                        </p>
-                        <p className="mb-50">
-                          Ius ferri velit sanctus cu, sed at soleat accusata.
-                          Dictas prompta et Ut placerat legendos interpre.Donec
-                          vitae sapien ut libero venenatis faucibus. Nullam quis
-                          ante Etiam sit amet orci eget. Quis commodo odio
-                          aenean sed adipiscing. Turpis massa tincidunt dui ut
-                          ornare lectus. Auctor elit sed vulputate mi sit amet.
-                          Commodo consequat. Duis aute irure dolor in
-                          reprehenderit in voluptate id est laborum.
-                        </p>
+                        <h2 className="mb-30">{sectionOne?.title}</h2>
+                        <p className="mb-25">{sectionOne?.description}</p>
                       </>
                     )}
                     <div className="carausel-3-columns-cover position-relative">
@@ -144,34 +150,18 @@ function About() {
                         id="carausel-3-columns"
                       >
                         <Slider {...settings}>
-                          <div className="img-card">
-                            {loading ? (
-                              <Skeleton style={{ height: "195px" }} />
-                            ) : (
-                              <LazyLoadImage src={about2} alt="" />
-                            )}
-                          </div>
-                          <div className=" img-card">
-                            {loading ? (
-                              <Skeleton style={{ height: "195px" }} />
-                            ) : (
-                              <LazyLoadImage src={about3} alt="" />
-                            )}
-                          </div>
-                          <div className=" img-card">
-                            {loading ? (
-                              <Skeleton style={{ height: "195px" }} />
-                            ) : (
-                              <LazyLoadImage src={about4} alt="" />
-                            )}
-                          </div>
-                          <div className=" img-card">
-                            {loading ? (
-                              <Skeleton style={{ height: "195px" }} />
-                            ) : (
-                              <LazyLoadImage src={about2} alt="" />
-                            )}
-                          </div>
+                          {sectionOne?.carouselImages.map((image, i) => (
+                            <div className="img-card" key={i}>
+                              {loading ? (
+                                <Skeleton style={{ height: "195px" }} />
+                              ) : (
+                                <LazyLoadImage
+                                  src={`${BASE_URL}/${image}`}
+                                  alt=""
+                                />
+                              )}
+                            </div>
+                          ))}
                         </Slider>
                       </div>
                     </div>
@@ -191,8 +181,13 @@ function About() {
                   <h2 className="title style-3 mb-40">What We Provide?</h2>
                 )}
                 <div className="row">
-                  {aboutCardData.map((_, i) => (
-                    <AboutCard key={i} />
+                  {sectionTwo?.map((item, i) => (
+                    <AboutCard
+                      image={item?.image}
+                      title={item?.text1}
+                      description={item?.text2}
+                      key={i}
+                    />
                   ))}
                 </div>
               </section>
@@ -205,7 +200,7 @@ function About() {
                       />
                     ) : (
                       <LazyLoadImage
-                        src={about5}
+                        src={BASE_URL + "/" + sectionThree?.image}
                         alt=""
                         className="mb-md-3 mb-lg-0 mb-sm-4"
                       />
@@ -225,86 +220,38 @@ function About() {
                       </div>
                     ) : (
                       <>
-                        <h4 className="mb-20 text-muted">Our performance</h4>
+                        <h4 className="mb-20 text-muted">
+                          {sectionThree?.text3}
+                        </h4>
                         <h1 className="heading-1 mb-40">
-                          Your Partner for e-commerce grocery solution
+                          {sectionThree?.text1}
                         </h1>
-                        <p className="mb-30">
-                          Ed ut perspiciatis unde omnis iste natus error sit
-                          voluptatem accusantium doloremque laudantium, totam
-                          rem aperiam, eaque ipsa quae ab illo inventore
-                          veritatis et quasi architecto
-                        </p>
-                        <p>
-                          Pitatis et quasi architecto beatae vitae dicta sunt
-                          explicabo. Nemo enim ipsam voluptatem quia voluptas
-                          sit aspernatur aut odit aut fugit, sed quia
-                        </p>
+                        <p className="mb-30">{sectionThree?.text2}</p>
                       </>
                     )}
                   </div>
                 </div>
                 <div className="row">
-                  <div className="col-lg-4 pr-30 mb-md-5 mb-lg-0 mb-sm-5">
-                    {loading ? (
-                      <div>
-                        <Skeleton
-                          style={{ height: "25px", marginBottom: "30px" }}
-                        />
-                        <Skeleton count={4} />
-                      </div>
-                    ) : (
-                      <>
-                        <h3 className="mb-30">Who we are</h3>
-                        <p>
-                          Volutpat diam ut venenatis tellus in metus. Nec dui
-                          nunc mattis enim ut tellus eros donec ac odio orci
-                          ultrices in. ellus eros donec ac odio orci ultrices
-                          in.
-                        </p>
-                      </>
-                    )}
-                  </div>
-                  <div className="col-lg-4 pr-30 mb-md-5 mb-lg-0 mb-sm-5">
-                    {loading ? (
-                      <div>
-                        <Skeleton
-                          style={{ height: "25px", marginBottom: "30px" }}
-                        />
-                        <Skeleton count={4} />
-                      </div>
-                    ) : (
-                      <>
-                        <h3 className="mb-30">Our history</h3>
-                        <p>
-                          Volutpat diam ut venenatis tellus in metus. Nec dui
-                          nunc mattis enim ut tellus eros donec ac odio orci
-                          ultrices in. ellus eros donec ac odio orci ultrices
-                          in.
-                        </p>
-                      </>
-                    )}
-                  </div>
-                  <div className="col-lg-4">
-                    {loading ? (
-                      <div>
-                        <Skeleton
-                          style={{ height: "25px", marginBottom: "30px" }}
-                        />
-                        <Skeleton count={4} />
-                      </div>
-                    ) : (
-                      <>
-                        <h3 className="mb-30">Our mission</h3>
-                        <p>
-                          Volutpat diam ut venenatis tellus in metus. Nec dui
-                          nunc mattis enim ut tellus eros donec ac odio orci
-                          ultrices in. ellus eros donec ac odio orci ultrices
-                          in.
-                        </p>
-                      </>
-                    )}
-                  </div>
+                  {sectionFour?.map((item, i) => (
+                    <div
+                      className="col-lg-4 pr-30 mb-md-5 mb-lg-0 mb-sm-5"
+                      key={i}
+                    >
+                      {loading ? (
+                        <div>
+                          <Skeleton
+                            style={{ height: "25px", marginBottom: "30px" }}
+                          />
+                          <Skeleton count={4} />
+                        </div>
+                      ) : (
+                        <>
+                          <h3 className="mb-30">{item.text1}</h3>
+                          <p>{item.text2}</p>
+                        </>
+                      )}
+                    </div>
+                  ))}
                 </div>
               </section>
             </div>
@@ -433,7 +380,7 @@ function About() {
             </div>
           )}
         </section>
-        <div className="container">
+        {/* <div className="container">
           <div className="row">
             <div className="col-xl-10 col-lg-12 m-auto">
               <section className="mb-50">
@@ -564,7 +511,7 @@ function About() {
               </section>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
       <Footer />
     </div>

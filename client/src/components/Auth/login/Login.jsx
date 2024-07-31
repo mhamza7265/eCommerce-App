@@ -8,7 +8,7 @@ import sendRequest, {
   errorToast,
   successToast,
 } from "../../../utility-functions/apiManager";
-import { BounceLoader } from "react-spinners";
+// import { BounceLoader } from "react-spinners";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -22,9 +22,11 @@ import {
   stopSpinner,
 } from "../../../redux/reducers/spinnerReducer";
 import { addCurrentUser } from "../../../redux/reducers/currentUserReducer";
+import { addLogInUser } from "../../../redux/reducers/logingInUserReducer";
+import requestPermission from "../../../utility-functions/notifications";
 
 function Login() {
-  const [loading, setLoading] = useState(false);
+  // const [loading, setLoading] = useState(false);
   const [pwVisible, setPwVisible] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -34,26 +36,28 @@ function Login() {
     formState: { errors },
   } = useForm();
 
-  const override = {
-    display: "block",
-    position: "absolute",
-    top: 0,
-    left: "90%",
-    margin: "0 auto",
-    borderColor: "red",
-    width: "10px",
-    height: "55px",
-  };
+  // const override = {
+  //   display: "block",
+  //   position: "absolute",
+  //   top: 0,
+  //   left: "90%",
+  //   margin: "0 auto",
+  //   borderColor: "red",
+  //   width: "10px",
+  //   height: "55px",
+  // };
 
-  const handleEyeClick = (e) => {
+  const handleEyeClick = () => {
     setPwVisible(!pwVisible);
   };
 
   const onSubmit = (data) => {
     dispatch(startSpinner());
+    dispatch(addLogInUser(data.email));
     sendRequest("post", "login", {
       email: data.email,
       password: data.password,
+      userRole: "basic",
     })
       .then((res) => {
         if (res.status) {
@@ -63,6 +67,8 @@ function Login() {
             token: res.token,
           };
           localStorage.setItem("current_user", JSON.stringify(userObj));
+
+          requestPermission(null);
 
           // dispatch(updateWishlistNavbar());
           sendRequest("get", "cart/qty")
@@ -123,6 +129,11 @@ function Login() {
         } else {
           dispatch(stopSpinner());
           errorToast(res.error);
+          if (res.verify) {
+            setTimeout(() => {
+              navigate("/verify");
+            }, 3000);
+          }
         }
       })
       .catch((err) => {
@@ -161,7 +172,7 @@ function Login() {
                       <div className="heading_s1">
                         <h1 className="mb-5">Login</h1>
                         <p className="mb-30">
-                          Don't have an account?{" "}
+                          {"Don't have an account?"}{" "}
                           <Link to="/register">Create here</Link>
                         </p>
                       </div>
@@ -238,18 +249,13 @@ function Login() {
                           </div>
                           <a className="text-muted">Forgot password?</a>
                         </div> */}
-                        <div className="form-group position-relative">
+                        <div className="d-flex justify-content-between position-relative">
                           <button className="btn btn-heading btn-block hover-up">
                             Log in
                           </button>
-                          <BounceLoader
-                            color={"#3bb77e"}
-                            loading={loading}
-                            cssOverride={override}
-                            size={150}
-                            aria-label="Loading Spinner"
-                            data-testid="loader"
-                          />
+                          <p className="mb-30">
+                            <Link to="/forgotPw">Forgot password?</Link>
+                          </p>
                         </div>
                       </form>
                     </div>
