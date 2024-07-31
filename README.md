@@ -3,8 +3,10 @@
 ## Setup
 
 1. Clone the repository.
-2. Copy the `.env.example` file to `.env` and fill in the required values.
+2. Copy the `.env.example` file to `.env` in client and fill in the required values.
+3. Copy the `service-account-file.example.json` file to `service-account-file.json` in server and fill in the required values.
 
 ```sh
 cp .env.example .env
+cp service-account-file.example.json service-account-file.json
 ```
